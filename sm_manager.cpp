@@ -87,6 +87,7 @@ RC SMManager::createTable(const char *relname, int count, AttrInfo *infos)
 	if (count <= 0 || infos == nullptr)
 		return SM_BADTABLE;
 
+	// relcat 中存储了表名, attrcat 中存储了某个表的所有属性信息
 	if ((strcmp(relname, "relcat") == 0) || (strcmp(relname, "attrcat") == 0))
 		return SM_BADTABLE;
 
@@ -262,6 +263,17 @@ RC SMManager::lookupAttrs(const char* relname, int& nattrs, DataAttr attrs[])
 	RMFileScan scan;
 	Ptr val = const_cast<char *>(relname);
 	DataAttr* attr;
+	/* Offset of member MEMBER in a struct of type TYPE. 
+	   等价于 ((size_t) & ((TYPE *)0)->MEMBER )
+		1. ( (TYPE *)0 ) 将零转型为TYPE类型指针;
+		2. ((TYPE *)0)->MEMBER 访问结构中的数据成员;
+		3. &( ( (TYPE *)0 )->MEMBER )取出数据成员的地址;
+		4.(size_t)(&(((TYPE*)0)->MEMBER))结果转换类型.巧妙之处在于将0转换成(TYPE*)，
+		结构以内存空间首地址0作为起始地址，则成员地址自然为偏移地址；
+		
+		#define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER) 
+	*/
+
 	scan.openScan(attr_, STRING, MAXNAME + 1, offsetof(DataRel, relname), EQ_OP, val);
 	RMRecord rcd;
 	nattrs = 0;

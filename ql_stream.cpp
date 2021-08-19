@@ -7,8 +7,14 @@ extern RMManager rmManager;
 extern IXManager ixManager;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~IdxWrapper~~~~~~~~~~~~~~~~~~~~~~*/
-IdxWrapper::IdxWrapper(const char* pathname, const DataAttr &idxattr, Operator op, const void* val,
-	int nattrs, const DataAttr attrs[], int nconds, const Condition conds[])
+IdxWrapper::IdxWrapper(const char* pathname, 	 // 表名
+						const DataAttr &idxattr, // 索引属性名
+						Operator op, 			 // 索引条件中的操作符，如上面 a = 10 中的 =
+						const void* val,		 // a = 10 中的 10
+						int nattrs, 			 // 该表的属性个数
+						const DataAttr attrs[],  // 该表的所有属性
+						int nconds, 			 // 一元条件中除去索引属性剩余属性的个数
+						const Condition conds[]) // 一元条件中除去索引属性剩余的属性
 	: Stream(nattrs, attrs, nconds, conds), pathname_(pathname)
 {
 	rmManager.openFile(pathname_, file_);

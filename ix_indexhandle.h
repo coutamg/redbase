@@ -2,7 +2,8 @@
 #define IX_INDEX_HANDLE_H
 
 #include <string.h>
-#include <tr1/memory>
+#include <memory>
+//#include <tr1/memory>
 #include <vector>
 #include "pf.h"
 #include "ix.h"

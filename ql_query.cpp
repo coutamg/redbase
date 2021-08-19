@@ -14,12 +14,15 @@ using Conds = tuple<int, Condition *>;
 
 //
 // lookupConds - 查找有关于relname这张表的所有的一元条件,relname表示表的名称
+// 这里的 select 的  opt_where_clause -> RW_WHERE non_mt_cond_list 中的
+// non_mt_cond_list 必须是 relname.attr 也就是 table.a 这种
 //
 static Conds lookupUnaryConds(const char * relname, int nconds, const Condition conditions[])
 {
 	int count = 0; /* 一元条件的数目 */
 	for (int i = 0; i < nconds; i++) {
-		if (!conditions[i].bRhsIsAttr &&
+		if (!conditions[i].bRhsIsAttr && // condition 中 ‘=’ 右边是数字
+			// 如果条件: a = 10, 这种没有 relname(表名) 怎么处理？？？
 			strcmp(conditions[i].lhsAttr.relname, relname) == 0) {
 			condspool[count++] = conditions[i];
 		}
@@ -139,8 +142,9 @@ static comp_func pick_comp_fun(int order, AttrType type)
 }
 
 
-Query* query_new(int nselattrs, const AggRelAttr selattrs[], int nrelations,
-	const char * const relations[], int nconditions, const Condition conditions[],
+Query* query_new(int nselattrs, const AggRelAttr selattrs[], /* 选择的属性 */
+		int nrelations, const char * const relations[], /* 选择的表 */
+		int nconditions, const Condition conditions[], /* 条件 */
 	int order, RelAttr &orderattr, bool group, RelAttr &groupattr)
 {
 	int nattrs, nconds;
@@ -152,28 +156,41 @@ Query* query_new(int nselattrs, const AggRelAttr selattrs[], int nrelations,
 		Stream *stream;
 		DataAttr *idxattr = nullptr;
 		/* 查找这张表的所有属性 */
+		// relations[i] 表中有 nattrs 个属性
+		// relations[i] 表中所有属性名 attrs
 		smManager.lookupAttrs(relations[i], nattrs, attrs);
-		/* 查找有关于这张表的所有一元条件 */
+		/* 查找有关于这张表的所有一元条件 也就是 a = 10 或者 a > 10 等等*/
+		// nconds 一元条件的数目
+		// unary_conds 是 conditions 中与 relations[i] 表相关的所有一元条件
 		tie(nconds, unary_conds) = lookupUnaryConds(relations[i], nconditions, conditions);
 
 		/* 检查是否能够使用索引,这里仅仅只能使用一个索引 */
 		int idx = 0;
 		for (int j = 0; j < nattrs; j++) {
-			if (attrs[j].idxno == -1) continue;
+			if (attrs[j].idxno == -1) continue; // 是否是索引
 			for (; idx < nconds; idx++) {
+				// 找一元条件中索引属性
+				// idx 是一元条件中索引属性的下表, 目前只能支持一个索引
 				if (strcmp(unary_conds[idx].lhsAttr.attrname, attrs[j].attrname) == 0) {
-					idxattr = attrs + j;
+					idxattr = attrs + j; // 找到索引的 attr
 					break;
 				}
 			}
 		}
 
-		if (idxattr != nullptr) { /* 可以使用索引 */
-			Operator op = unary_conds[idx].op;
-			void* data = unary_conds[idx].rhsValue.data;
+		if (idxattr != nullptr) { /* 可以使用索引 idxattr 就是索引 */
+			Operator op = unary_conds[idx].op; // 一元条件中的的属性是索引, 也是就是 a = 10 中的 a 属性是索引
+			void* data = unary_conds[idx].rhsValue.data; // 这里就是 a = 10 中的 10
+			// 把 idx 后面的属性往前移动一位
 			memmove(&unary_conds[idx], &unary_conds[idx + 1], sizeof(Condition) * (nconds - idx));
-			stream = new IdxWrapper(relations[i], *idxattr, op, data,
-				nattrs, attrs, nconds - 1, unary_conds);
+			stream = new IdxWrapper(relations[i], // 表名
+									*idxattr, // 索引属性名
+									op,		  // 索引条件中的操作符，如上面 a = 10 中的 =
+									data,	  // a = 10 中的 10
+									nattrs,   // 该表的属性个数
+									attrs, 	  // 该表的所有属性
+									nconds - 1, // 一元条件中除去索引属性剩余属性的个数
+									unary_conds); // 一元条件中除去索引属性剩余的属性
 		}
 		else { /* 不可以使用索引 */
 			stream = new RcdWrapper(relations[i], nattrs, attrs, nconds, unary_conds);
@@ -192,6 +209,7 @@ Query* query_new(int nselattrs, const AggRelAttr selattrs[], int nrelations,
 	tie(nconds, binary_conds) = lookupBinaryConds(nconditions, conditions);
 	/* 将余下的二元条件全部添加至stream中 */
 	for (int i = 0; i < nconds; i++) {
+		// 最后一个 stream 会包含所有 select 语句的二元条件
 		comb->appendCond(binary_conds[i]);
 	}
 	return new Query(comb, nselattrs, selattrs, order, orderattr, group, groupattr);

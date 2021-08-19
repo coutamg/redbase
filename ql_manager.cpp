@@ -54,18 +54,21 @@ RC QLManager::insert(const char* relname, int nvals, Value vals[])
 //
 // select : 解析select命令
 // 
-RC QLManager::select(int nselattrs, const AggRelAttr selattrs[],
-	int nrelations, const char * const relations[],
-	int nconditions, const Condition conditions[],
+RC QLManager::select(int nselattrs, const AggRelAttr selattrs[], /* 选择的属性 */
+	int nrelations, const char * const relations[],	/* 选择的表 */
+	int nconditions, const Condition conditions[], /* 条件 */
 	int order, RelAttr orderattr, bool group, RelAttr groupattr)
 {
-	Query *query = query_new(nselattrs, selattrs, nrelations, relations,
-		nconditions, conditions, order, orderattr, group, groupattr);
+	Query *query = query_new(nselattrs, selattrs, 
+							nrelations, relations,
+							nconditions, conditions, 
+							order, orderattr, group, groupattr);
 	Printer print(query->discs(), query->discsSize()); /* Printer具体负责输出 */
 	query->open();
 	Item it;
 	RC errval;
 	print.printHeader();
+	// 这里去扫描数据
 	for ( ; ; ) {
 		errval = query->next(it);
 		if (errval == QL_EOF) break;

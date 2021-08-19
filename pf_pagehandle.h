@@ -1,7 +1,8 @@
 #ifndef PF_PAGE_HANDLE_H
 #define PF_PAGE_HANDLE_H
 #include "pf.h"
-#include <tr1/memory>
+#include <memory>
+//#include <tr1/memory>
 using namespace std;
 
 class PFFileHandle;

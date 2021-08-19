@@ -34,7 +34,10 @@ class Stream : public noncopyable
 	friend class CombWrapper;
 	friend class Query;
 public:
-	Stream(int nattrs, const DataAttr attrs[], int nconds, const Condition conds[]) 
+	Stream(int nattrs, 				 // 该表的属性个数
+			const DataAttr attrs[],  // 该表的所有属性
+			int nconds, 			 // 一元条件中除去索引属性剩余属性的个数
+			const Condition conds[]) // 一元条件中除去索引属性剩余的属性
 		: attrs_(attrs, attrs + nattrs), conds_(conds, conds + nconds)
 	{
 		if (attrs_.size() == 0) {
@@ -62,10 +65,10 @@ public:
 	void appendCond(const Condition cond) { conds_.push_back(cond); }
 protected:
 	int rcdlen_; /* 记录的长度 */
-	map<const char*, int, CharCmp> indicator_;
+	map<const char*, int, CharCmp> indicator_; // 便于通过属性名在 attrs_ 中寻找对应的 DataAttr
 	vector<Comp *> comps_;
-	vector<Condition> conds_;
-	vector<DataAttr> attrs_;
+	vector<Condition> conds_; // 一元条件中除去索引属性剩余的属性
+	vector<DataAttr> attrs_;  // 该表的所有属性
 };
 
 
@@ -83,8 +86,8 @@ public:
 	virtual void clean() {}
 private:
 	IXIndexScan scan_;
-	RMFilePtr file_;
-	IXIndexPtr index_;
+	RMFilePtr file_; // 存储表数据的文件
+	IXIndexPtr index_; // 存储该表索引的文件
 	vector<int> loffsets_; /* 条件左侧的变量在记录中的偏移量 */
 	const char* pathname_;
 };
@@ -153,7 +156,18 @@ public:
 protected:
 	virtual RC rewind();
 private:
-	Stream *lhs_;
+	/*	
+		map<const char*, Stream*, CharCmp> rels;
+
+							    +-------> lsh_(rels[relations[0]])
+							    |
+			     +-----> lsh_ --+-------> rhs_(rels[relations[1]])
+	             |
+		+-> lhs_ --+-----> rhs_(rels[relations[2]])
+	... |
+		+-> rhs_(rels[relations[3]])
+	*/
+	Stream *lhs_; // 最上一层的 lhs 包含了所有表的属性, 同时包含了 select 语句所有的条件
 	Stream *rhs_;
 	vector<int> loffsets_;
 	vector<int> roffsets_;

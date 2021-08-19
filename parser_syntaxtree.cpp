@@ -361,6 +361,7 @@ void SyntaxTree::parseNonmtSelectClause(NODE* &node)
 	if (ta) {
 		if (ta->type == RW_STAR) {
 			discard(1);
+			// 这种可以把所有的属性名替换 ‘*’ 吧
 			node = list_node(aggrelattr_node(NO_F, NULL, (char *)"*"));
 		}
 		else

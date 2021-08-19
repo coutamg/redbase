@@ -451,7 +451,7 @@ int interp(NODE *n)
 
 			/* 开始调用select函数 */
 			errval = qlManager.select(nselattrs, relAttrs, /* 选择的属性 */
-				nrelations, relations, /* 选择的表格 */
+				nrelations, relations, /* 选择的表 */
 				nconditions, conditions, /* 条件 */
 				order, orderAttr,
 				group, groupAttr);

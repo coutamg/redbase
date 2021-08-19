@@ -97,12 +97,15 @@ typedef struct node {
 
 		/* QL component nodes */
 		/* query node */
+		/* RW_SELECT non_mt_select_clause RW_FROM non_mt_relation_list opt_where_clause 
+		 *		opt_order_by_clause opt_group_by_clause
+		*/
 		struct {
-			struct node *relattrlist;
-			struct node *rellist;
-			struct node *conditionlist;
-			struct node *orderrelattr;
-			struct node *grouprelattr;
+			struct node *relattrlist; 	// non_mt_select_clause
+			struct node *rellist;		// non_mt_relation_list
+			struct node *conditionlist;	// opt_where_clause
+			struct node *orderrelattr;	// opt_order_by_clause
+			struct node *grouprelattr;	// opt_group_by_clause
 		} QUERY;
 
 		/* insert node */

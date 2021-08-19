@@ -4,7 +4,8 @@
 #include "pf_buffer.h"
 #include "pf_pagehandle.h"
 #include "noncopyable.h"
-#include <tr1/memory>
+//#include <tr1/memory>
+#include <memory>
 using namespace std;
 
 //

@@ -30,8 +30,9 @@ struct RelAttr {
 	friend std::ostream &operator<<(std::ostream &s, const RelAttr &ra);
 };
 
+// 代表 a = b 或者 a = 10
 struct Condition {
-	RelAttr  lhsAttr;    /* left-hand side attribute            */
+	RelAttr  lhsAttr;    /* left-hand side attribute            */ 
 	Operator op;         /* comparison operator                 */
 	bool      bRhsIsAttr;/* TRUE if the rhs is an attribute,    */
 						 /* in which case rhsAttr below is valid;*/

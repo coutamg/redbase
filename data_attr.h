@@ -10,7 +10,7 @@ struct DataAttr {
 	AttrType type;					// 类型
 	int len;						// 长度
 	int idxno;						// 如果带有索引的话,索引的编号
-	char relname[MAXNAME + 1];		// 
+	char relname[MAXNAME + 1];		// 表名
 	char attrname[MAXNAME + 1];		// 属性的名称
 public:
 	static int members() { return 7; }

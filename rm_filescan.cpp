@@ -11,6 +11,7 @@
 #include "pf_pagehandle.h"
 using namespace std;
 
+// 只读 DataRel 内 attroffset 偏移量的成员
 RC RMFileScan::openScan(RMFilePtr& file, AttrType type, 
 	int len, int attroffset, Operator op, const void* val)
 {

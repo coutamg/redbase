@@ -1,6 +1,7 @@
 #ifndef BTREE_NODE_H
 #define BTREE_NODE_H
-#include <tr1/memory>
+#include <memory>
+//#include <tr1/memory>
 #include "redbase.h"
 #include "pf.h"
 #include "rm_rid.h"
