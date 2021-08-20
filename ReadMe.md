@@ -63,6 +63,56 @@ print stars;
 exit;
 
 ```
-你可以在我代码的基础之上继续改进代码，下面是运行的一些截图：
-![](http://img.blog.csdn.net/20171208171016533)
-![](http://img.blog.csdn.net/20171206201018250)
+
+## File and Page Layout
+
+each file to have a file header page on which you store information about the file 
+as a whole, followed by a set of data pages. Information that might be stored on 
+the header page includes the size of the records in the file, the number of records 
+that may be stored on each page, the current number of pages in the file, the location 
+of pages with free space, etc. Each data page will contain some header information 
+and some records.
+
+## File Header Management
+When the RM_Manager::OpenFile method is called, it should call PF_Manager::OpenFile 
+to actually open the file. You will probably then want to copy the file header information 
+into a private variable in the file handle that refers to the open file instance. 
+By copying this information, you will subsequently be able to find out details such as 
+the record size and the number of pages in the file by looking in the file handle instead 
+of reading the header page again (or keeping the information on every page). Once you have 
+read the header information from the header page into the file handle, you can unpin the 
+header page since there is no need to waste buffer space by keeping the header page in the 
+buffer pool the entire time the file is open. Note, however, that any changes made to the 
+header while the file is open (e.g., the number of pages in the file, or the location of free 
+space) must be written back when the file is closed. You can do this by keeping a modified 
+flag in the file handle and writing the information back when the flag is set.
+
+## Record Identifiers
+The RID class described above defines unique identifiers for records within a given file. 
+Record identifiers will serve as tuple identifiers for higher-level RedBase components. 
+Thus, the identifier for a given record should be permanent: the components of a record 
+identifier should not change if the record is updated, or as the result of an insertion 
+or deletion of a different record.
+
+## Keeping Track of Free Space
+When inserting records, you are strongly discouraged from performing a linear search through
+pages in order to find a page with free space. One solution is to effectively create a linked
+list of pages that have empty slots in them. You can do this by placing appropriate pointers
+in page headers, with a pointer to the first page in the list included in the file header. 
+When you need to insert a record, insert it into an empty slot in the first page of the list. 
+You will need to modify the list as records are inserted and deleted.
+
+There are a variety of ways to keep track of free record slots on a given page. One efficient 
+method is to use a bitmap: If each data page can hold n records, then you can store an n-bit 
+bitmap in the page header indicating which slots currently contain valid records and which slots 
+are available. Note that the size of the bitmap needed for each page is dependent on the number
+of records that can be stored on that page, which in turn is dependent on the record size for the 
+file. Hence your bitmaps will be the same size for each page of a given file, but bitmap sizes 
+should be different for different files. One way to implement variable-size bitmaps is as arrays 
+of char's or int's, where the individual bits are manipulated using the operators &, |, and ^.
+
+Note that under no circumstances should you place a limit on the total number of records that 
+can be stored in a file -- each file should be able to grow arbitrarily large. (Admittedly 
+there is an indirect limit because PageNum is defined as an integer, but it should be possible 
+to change the type of PageNum -- say to a long integer -- without changing your code.)
+

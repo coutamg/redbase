@@ -13,6 +13,10 @@ using Slot = int;
 
 //
 // RID - Record id interface
+/*
+	RID类定义记录标识符对象。记录标识符根据文件中记录的页码和该页中的插槽号，
+	唯一地标识给定文件中的记录。
+*/
 // 
 struct RID {
 	Page num;
