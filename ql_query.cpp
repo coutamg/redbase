@@ -141,7 +141,7 @@ static comp_func pick_comp_fun(int order, AttrType type)
 	return func;
 }
 
-
+// 构造一条语句的执行计划？？
 Query* query_new(int nselattrs, const AggRelAttr selattrs[], /* 选择的属性 */
 		int nrelations, const char * const relations[], /* 选择的表 */
 		int nconditions, const Condition conditions[], /* 条件 */
@@ -212,7 +212,9 @@ Query* query_new(int nselattrs, const AggRelAttr selattrs[], /* 选择的属性 */
 		// 最后一个 stream 会包含所有 select 语句的二元条件
 		comb->appendCond(binary_conds[i]);
 	}
-	return new Query(comb, nselattrs, selattrs, order, orderattr, group, groupattr);
+	return new Query(comb, 
+					nselattrs, selattrs, /* 选择的属性 */
+					order, orderattr, group, groupattr);
 }
 
 void query_free(Query* query)

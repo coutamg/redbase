@@ -16,7 +16,7 @@ public:
 	const static int capacity = 40;
 	const static int pagesize = PF_PAGE_SIZE + sizeof(PFPageHdr);
 private:
-	struct BufferNode {
+	struct BufferNode { // 与 page 一一对应
 		bool dirty;
 		uint count;
 		int fd;

@@ -149,8 +149,16 @@ RC PFFileHandle::disposePage(Page num)
 		unpin(num);
 		return PF_PAGEFREE;
 	}
+	// 链表的头插法
+	/*
+			PFFileHdr			num1 page          num2 page
+		+-------------+     +-------------+    +-------------------------+
+		| free = num1 |  -> | free = num2 | -> | free = PF_PAGE_LIST_END |
+		+-------------+     +-------------+    +-------------------------+
+	*/
 	hdr->free = hdr_.free; // 将销毁的页面放入链表中,这么做是为了避免产生空洞
 	hdr_.free = num;
+
 	changed_ = true;
 	markDirty(num);
 	unpin(num);
