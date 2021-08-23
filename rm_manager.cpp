@@ -21,7 +21,7 @@ RC RMManager::createFile(const char* pathname, uint rcdlen)
 	PFPageHandle page = PFAllocPage(file);
 	Ptr addr = page.rawPtr();
 	
-	// 文件的第一块是头部信息
+	// 文件的第 0 号 page 是 RM 的头部信息
 	RMFileHdr *hdr = (RMFileHdr *)addr;
 	hdr->free = PAGE_LIST_END;	// 第0页仅仅用作RM文件头,不做别的使用.
 	hdr->size = 1;				// 已经分配了的页的数目

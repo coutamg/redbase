@@ -84,7 +84,7 @@ public:
 		return bytes_;
 	}
 private:
-	Ptr buffer_;
+	Ptr buffer_; // 对应每一页头部中的 slotMap[]
 	uint capacity_;
 	uint bytes_;
 };
@@ -95,8 +95,8 @@ private:
 class RMPageHdr {
 public:
 	RMPageHdr(uint slots, Ptr addr)
-		: buffer_(addr)
-		, slots_(slots)
+		: buffer_(addr) // addr 是磁盘文件的 page
+		, slots_(slots) // 该 page 能存 slots 个 record
 		, map(slots, addr + sizeof(int) + 2 * sizeof(uint))
 	{}
 	~RMPageHdr() {}
@@ -121,6 +121,7 @@ public:
 		return *reinterpret_cast<uint *>(buffer_ + sizeof(int) + sizeof(uint));
 	}
 
+	// 设置 RMPageHdr 中的 free 字段
 	void setNext(int val)
 	{
 		*reinterpret_cast<int *>(buffer_) = val;
@@ -136,10 +137,10 @@ public:
 		*reinterpret_cast<uint *>(buffer_ + sizeof(int) + sizeof(uint)) = val;
 	}
 public:
-	BitMap map;
+	BitMap map; // 这里对应 slotMap 
 private:
 	uint slots_;
-	Ptr buffer_;
+	Ptr buffer_; // 每一页对应的缓存
 };
 
 

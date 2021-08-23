@@ -17,8 +17,9 @@ uint static CalcSlotsCapacity(uint len)
 {
 	uint remain = PF_PAGE_SIZE - sizeof(RMPageHdrEx); // 剩余可用的字节数目
 	// floor - 向下取整
-	// 每一条记录都需要1个bit,也就是1/8字节来表示是否已经记录了数据
+	// 每一条记录都需要1个bit,也就是1/8字节来表示是否已经记录了数据，用一位来表示数据是否存在
 	uint slots = floor((1.0 * remain) / (len + 1 / 8));
+	//                 记录头部信息的长度     bitmap 为了查找某条 record 是否存在     
 	uint hdr_size = sizeof(RMPageHdrEx) + BitMap::bytes(slots);
 	// 接下来需要不断调整
 	while ((slots * len + hdr_size) > PF_PAGE_SIZE) {
@@ -33,8 +34,10 @@ RMFileHandle::RMFileHandle(PFFilePtr file)
 	: changed_(false)
 {
 	pffile_ = file;
+	// 从文件中获取第 0 页，也就是 RMFileHdr 头信息
 	PFPageHandle page = PFGetPage(file, 0);
 	Ptr buff = page.rawPtr();
+	// 
 	memcpy(&rmhdr_, buff, sizeof(RMFileHdr));
 	rcdlen_ = rmhdr_.rcdlen;
 	capacity_ = CalcSlotsCapacity(rcdlen_);
@@ -75,7 +78,7 @@ RC RMFileHandle::insertRcd(const Ptr addr, RID &rid)
 	PFPageHandle page;
 	Page num;
 	Slot slot;
-	// 从一个拥有空闲的pos的空闲页面中获取一个空闲的pos
+	// 从一个拥有空闲 record pos 集合中的空闲页面中获取一个空闲的 record pos
 	nextFreeSlot(page, num, slot);
 	// 从页面头部提取出该页面的信息
 	Ptr ptr = page.rawPtr();
@@ -149,11 +152,11 @@ RC RMFileHandle::getRcd(const RID &rid, RMRecord &rcd)
 	if (!isValidRID(rid)) return RM_BAD_RID;
 	Page num = rid.page();
 	Slot pos = rid.slot();
-	PFPageHandle page = PFGetPage(pffile_, num);
-	Ptr addr = page.rawPtr();
-	RMPageHdr hdr(capacity_, addr);
+	PFPageHandle page = PFGetPage(pffile_, num); // 找到第 num 个 page 的地址
+	Ptr addr = page.rawPtr(); // page 的地址
+	RMPageHdr hdr(capacity_, addr); //
 	if (hdr.map.available(pos)) return RM_NORECATRID; // 该pos必定不会空闲
-	addr = addr + hdr.lenOfHdr() + pos * rcdlen_;
+	addr = addr + hdr.lenOfHdr() + pos * rcdlen_; // 第 pos 条 record 的首地址
 	rcd.set(addr, rmhdr_.rcdlen, rid);		// 设定记录
 	return 0;
 }
@@ -180,7 +183,9 @@ bool RMFileHandle::nextFreeSlot(PFPageHandle& page, Page &num, Slot& slot)
 		page = PFAllocPage(pffile_);
 		addr = page.rawPtr();
 		num = page.page();
+		// capacity_ 表示这个 page 可以存多少 slot(也就是 record)
 		RMPageHdr hdr(capacity_, addr);
+		// 设置 RMPageHdr 的 free 字段
 		hdr.setNext(PAGE_LIST_END);
 		hdr.setRemain(capacity_);
 		int remain = hdr.remain();

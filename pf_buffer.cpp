@@ -29,6 +29,7 @@ RC PFBuffer::getPage(int fd, Page num, Ptr &addr)
 		// 分配一个空的页面,页面的在buff中的位置由idx记录
 		idx = searchAvaliableNode();
 		if (idx < 0) return PF_NOBUF;
+		// 从文件对应的第 num page 读出输入写入 nodes_[idx].buffer 中
 		readPage(fd, num, nodes_[idx].buffer);
 		nodes_[idx].fd = fd;
 		nodes_[idx].num = num;
@@ -82,7 +83,7 @@ RC PFBuffer::allocPage(int fd, Page num, Ptr &addr)
 	nodes_[idx].num = num;
 	nodes_[idx].dirty = false;
 	nodes_[idx].count = 1;
-	addr = nodes_[idx].buffer;
+	addr = nodes_[idx].buffer; // 内存中的地址
 	return 0;
 }
 

@@ -23,9 +23,10 @@ RC PFManager::createFile(const char* pathname)
 	char hdrBuf[PF_FILE_HDR_SIZE];
 	memset(hdrBuf, 0, PF_FILE_HDR_SIZE);
 
-	PFFileHdr *hdr_ = (PFFileHdr*)hdrBuf;
-	hdr_->free = PF_PAGE_LIST_END;
-	hdr_->size = 0;
+	// 磁盘文件的头部，最开始记录了
+	PFFileHdr *hdr = (PFFileHdr*)hdrBuf;
+	hdr->free = PF_PAGE_LIST_END;
+	hdr->size = 0;
 
 	// 将头部写入到文件中
 	n = Write(fd, hdrBuf, PF_FILE_HDR_SIZE);

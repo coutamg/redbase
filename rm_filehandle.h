@@ -35,10 +35,10 @@ private:
 	bool nextFreeSlot(PFPageHandle& page, Page &num, Slot& slot);
 	int getPages() const { return rmhdr_.size; }
 public:
-	uint capacity_;		// 每个页可支持的的slot的数目
+	uint capacity_;		// 每个页可支持的的slot的数目, 也就是 
 	PFFilePtr pffile_;
 	RMFileHdr rmhdr_;
-	uint rcdlen_;		// 每一条记录的长度
+	uint rcdlen_;		// 每一条记录的长度, record 长度固定
 	bool changed_;		// 文件头信息是否已经改变
 };
 

@@ -98,9 +98,29 @@ RC PFFileHandle::getPage(Page num, PFPageHandle &page) const
 	return PF_INVALIDPAGE;
 }
 
+
+
+/*
+
+
+        +----------------------------------+
+        |            +--- 4096 --------+   |
+       \|/          \|/   Page        \|/ \|/
+	+----------------+-----------------+-----------------+-----------------+-----------------+-----+
+    | free(2)|size(4)|free(-2)|  data  |free(4) |  data  |free(-2)|  data  |free(-1)|  data  | ... |
+    +----------------+-----------------+-----------------+-----------------+-----------------+-----+
+     PFFileHdr         PFPageHdr   page    |                                   /|\
+					  (-2 表示被   存数据    +------------------------------------+
+					      使用。  
+					   -1 表示空
+					      闲page
+						  链终点)
+				           
+						   page 1             page 2              page 3          page 4
+*/
 //
-// allocatePage - 在文件中分配一个新的页面
-//
+// allocatePage - 在文件 buffer 中分配一个新的页面, 通过 page num 映射到磁盘中
+// 
 RC PFFileHandle::allocPage(PFPageHandle &page)
 {
 	RC rc;		// 返回码
@@ -109,6 +129,7 @@ RC PFFileHandle::allocPage(PFPageHandle &page)
 
 	if (!opened_) return PF_CLOSEDFILE;
 
+	// 这里说明后面有空闲的 page
 	if (hdr_.free != PF_PAGE_LIST_END) { // 仍然存在空闲页面,取出一块
 		num = hdr_.free;
 		if (rc = buff_->getPage(fd_, num, addr)) return rc;
@@ -116,20 +137,21 @@ RC PFFileHandle::allocPage(PFPageHandle &page)
 		hdr_.free = ((PFPageHdr *)addr)->free; // 空洞数目减1
 	}
 	else { // 空闲链表为空
-		num = hdr_.size;
-		// 分配一个新的页面
+		// 分配的时候 num 决定了这个 page 在磁盘中的位置了
+		num = hdr_.size; // page num 直接是从 PFFileHdr 的 size 中获取
+		// 分配一个新的页面, 目前是从内存中分配的
 		if (rc = buff_->allocPage(fd_, num, addr)) return rc;
 		hdr_.size++;
 	}
 	changed_ = true; // 文件发生了变动
-	// 将这个页面标记为USED
+	// 将这个页面标记为USED，新分配出来的 page
 	((PFPageHdr *)addr)->free = PF_PAGE_USED;
 	memset(addr + sizeof(PFPageHdr), 0, PF_PAGE_SIZE);
 	// 将页面标记为脏
 	markDirty(num);
 	// 将页面的信息填入pph中
 	page.num_ = num;
-	page.addr_ = addr + sizeof(PFPageHdr); // 指向实际的数据
+	page.addr_ = addr + sizeof(PFPageHdr); // 指向该 page 存数据的首地址
 	return 0;
 }
 

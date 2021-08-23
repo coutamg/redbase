@@ -4,6 +4,9 @@
 //
 // RMRecord
 // 
+/*
+ 在 page 中存的数据是一条一条 record
+*/
 class RMRecord {
 	friend class RMRecordTest;
 public:

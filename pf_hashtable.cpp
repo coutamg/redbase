@@ -16,6 +16,7 @@ int PFHashTable::search(int fd, Page num)
 	if (key < 0) return -1;
 	list<Triple>& lst = table_[key];
 	list<Triple>::const_iterator it;
+	// 到 hash 冲突链表中寻找对应的 page
 	for (it = lst.begin(); it != lst.end(); it++) {
 		if ((it->fd == fd) && (it->num == num))
 			return it->slot;
